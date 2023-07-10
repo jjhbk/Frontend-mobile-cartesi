@@ -19,15 +19,21 @@ import {IERC721__factory} from '@cartesi/rollups';
 import {isEnabled} from 'react-native/Libraries/Performance/Systrace';
 import {MyStyles} from './styles';
 import tunnelConfig from './tunnel_config.json';
-export const Input: React.FC = () => {
-  const rollups = useRollups();
-  const provider = new ethers.providers.JsonRpcProvider(tunnelConfig.hardhat);
-
-  const sendAddress = async (str: string) => {
-    if (rollups) {
-      rollups.relayContract.relayDAppAddress(rollups.dappContract.address);
-    }
-  };
+import chainConfig from './config.json';
+import {NetworkList, Props_Interface} from './props_interface';
+import {useMetaMask} from './hooks/useMetaMask';
+export const Input: React.FC<Props_Interface> = (props: Props_Interface) => {
+  const rollups = useRollups(props);
+  const {
+    wallet,
+    hasProvider,
+    isConnecting,
+    connectMetaMask,
+    provider,
+    ethereum,
+  } = useMetaMask();
+  const PRIV_KEY_LOCAL_HARDHAT =
+    '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a';
 
   const addInput = async (str: string) => {
     if (rollups) {
@@ -43,7 +49,10 @@ export const Input: React.FC = () => {
         `Deposited (${amount}) of ERC20 (${token}).`,
       );
       //const data = `Deposited ${args.amount} tokens (${args.token}) for DAppERC20Portal(${portalAddress}) (signer: ${address})`;
-      const signer = provider.getSigner();
+      let signer =
+        props.network === NetworkList.Localhost
+          ? new ethers.Wallet(PRIV_KEY_LOCAL_HARDHAT, props.provider)
+          : provider.getSigner();
       const signerAddress = await signer.getAddress();
 
       const erc20PortalAddress = rollups.erc20PortalContract.address;
